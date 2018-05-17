@@ -91,11 +91,11 @@ class MainActivity : AbstractActivity<ActivityComponent, MainActivityScene, Main
     fun onAddRepoClick() {
         //presenter.onAddRepoClick()
         val alertBuilder = AlertDialog.Builder(this)
-        alertBuilder.setTitle(R.string.repo_input_title).setMessage(R.string.repo_input_body)
+        alertBuilder.setTitle(R.string.repo_input_title)
 
         val et = EditText(this)
         et.inputType = InputType.TYPE_CLASS_TEXT
-        alertBuilder.setView(et)
+        et.hint = getString(R.string.repo_input_body)
 
         alertBuilder.setPositiveButton(R.string.ok, {dialog,_ ->
             presenter.onRepoInput(et.text.toString().trim())
@@ -106,7 +106,11 @@ class MainActivity : AbstractActivity<ActivityComponent, MainActivityScene, Main
             dialog.dismiss()
         })
 
-        displayedDialog = alertBuilder.show()
+        with(alertBuilder.create()) {
+            this.setView(et, 56, 50, 60, 10)
+            displayedDialog = this
+            this.show()
+        }
     }
 
     override fun showInvalidInputError() {

@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingLeft="16dp"
-    android:paddingRight="16dp"
-    android:paddingTop="6dp"
-    android:paddingBottom="6dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:contentPaddingLeft="16dp"
+    app:contentPaddingRight="16dp"
+    app:contentPaddingTop="6dp"
+    app:contentPaddingBottom="6dp"
+    android:layout_marginBottom="2dp"
     xmlns:tools="http://schemas.android.com/tools">
     <TextView
         android:id="@+id/title"
@@ -27,8 +29,7 @@
         android:textColor="@android:color/black"
         android:lines="1"
         android:ellipsize="end"
-        android:layout_below="@id/title"
-        android:layout_marginTop="2dp"
+        android:layout_marginTop="22dp"
         android:layout_marginRight="80dp"
         tools:text="User Name"/>
 
@@ -36,7 +37,7 @@
         android:id="@+id/icon"
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:layout_alignParentRight="true"
+        android:layout_gravity="right"
         tools:src="@mipmap/ic_launcher"/>
     <TextView
         android:id="@+id/body"
@@ -44,7 +45,8 @@
         android:layout_height="wrap_content"
         android:textColor="@android:color/black"
         android:lines="3"
-        android:layout_below="@id/icon"
+        android:layout_marginTop="50dp"
         android:ellipsize="end"
-        tools:text="Line 1 kgkg hghgfds kgkfjg tigsk gkgkbsafjh hghjghsa gksfgh gkhgk \nLine 2\nLine 3"/>
-</RelativeLayout>
+        tools:text="Line 1 kgkg hghgfds kgkfjg tigsk gkgkbsafjh hghjghsa gksfgh gkhgk \nLine 2\nLine 3"
+        tools:visibility="visible"/>
+</android.support.v7.widget.CardView>
