@@ -13,8 +13,7 @@ import javax.inject.Inject
 
 const val GITHUB_API_DEAFULT_PAGE_SIZE = 30
 
-class PullListPresenterImpl
-    @Inject constructor(private val githubService: GithubService)
+class PullListPresenterImpl @Inject constructor(private val githubService: GithubService)
     : AbstractFragmentPresenterImpl<PullListScene>(), PullListPresenter {
     var hasMorePages = true
     var currentPage = 1
