@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Whatever</string>
+    <string name="msg_no_repo">Add repo to view open pull requests</string>
+    <string name="add_repo">Add Repo</string>
+    <string name="repo_input_title">Enter Repo</string>
+    <string name="repo_input_body">Format: user/repo</string>
+    <string name="remove_repo">Remove Repo</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="err_repo_input">Check input text</string>
+    <string name="msg_no_data">No requests found</string>
+</resources>
