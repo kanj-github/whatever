@@ -6,5 +6,5 @@ interface PullListPresenter : AbstractFragmentPresenter<PullListScene> {
         val ARG_REPO = "ARG_REPO"
     }
 
-    fun fetchMore(): Boolean
+    //fun fetchMore(): Boolean
 }

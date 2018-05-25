@@ -1,5 +1,6 @@
 package com.example.kanj.whatever
 
+import android.arch.paging.PagedList
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
@@ -16,15 +17,11 @@ import com.example.kanj.whatever.dagger.ActivityComponent
 import kotlinx.android.synthetic.main.fragment_pullrequest.*
 import javax.inject.Inject
 
-const val LOAD_MORE_THRESHOLD = 3
-
 class PullListFragment : AbstractFragment<ActivityComponent, PullListScene>(), PullListScene {
     lateinit var recyclerView: RecyclerView
     lateinit var progressBar: ProgressBar
-    lateinit var adapter: PullsAdapter
+    lateinit var pagedAdapter : PagedPullsAdapter
     lateinit var layoutManager: LinearLayoutManager
-    var isLoadingMore: Boolean = false
-    var shouldLoadMore: Boolean = true
 
     @Inject lateinit var presenter: PullListPresenter
 
@@ -43,29 +40,17 @@ class PullListFragment : AbstractFragment<ActivityComponent, PullListScene>(), P
 
         layoutManager = LinearLayoutManager(context)
         recyclerView.layoutManager = layoutManager
-        adapter = PullsAdapter(ArrayList())
-        recyclerView.adapter = adapter
-        recyclerView.setOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView?, dx: Int, dy: Int) {
-                if (dy > 0) {
-                    val visible = layoutManager.childCount
-                    val total = layoutManager.itemCount
-                    val firstVisible = layoutManager.findLastVisibleItemPosition()
-
-                    if (shouldLoadMore && !isLoadingMore && (visible + firstVisible + LOAD_MORE_THRESHOLD) >= total) {
-                        shouldLoadMore = presenter.fetchMore()
-                        isLoadingMore = shouldLoadMore
-                    }
-                }
-            }
-        })
+        pagedAdapter = PagedPullsAdapter()
+        recyclerView.adapter = pagedAdapter
         return view
     }
 
-    override fun addPullItemsToList(items: ArrayList<PullRequest>) {
+    override fun hideProgressBar() {
         progressBar.visibility = View.GONE
-        adapter.appendItemsToList(items)
-        isLoadingMore = false
+    }
+
+    override fun setPagedPullList(pagedList: PagedList<PullRequest>) {
+        pagedAdapter.submitList(pagedList)
     }
 
     override fun setToolbarTitle(title: String) {
@@ -74,6 +59,7 @@ class PullListFragment : AbstractFragment<ActivityComponent, PullListScene>(), P
 
     override fun showNoDataError() {
         progressBar.visibility = View.GONE
+        recyclerView.visibility = View.GONE
         msg_no_data.visibility = View.VISIBLE
     }
 }

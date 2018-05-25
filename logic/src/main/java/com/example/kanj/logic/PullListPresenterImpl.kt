@@ -1,5 +1,8 @@
 package com.example.kanj.logic
 
+import android.arch.paging.DataSource
+import android.arch.paging.PageKeyedDataSource
+import android.arch.paging.RxPagedListBuilder
 import android.os.Bundle
 import com.example.kanj.api.GithubService
 import com.example.kanj.api.response.PullRequest
@@ -9,15 +12,20 @@ import com.example.kanj.base.PullListScene
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.PublishSubject
+import java.io.IOException
 import javax.inject.Inject
 
 const val GITHUB_API_DEAFULT_PAGE_SIZE = 30
+const val DATA_STATE_ERROR  = 0
+const val DATA_STATE_BLANK  = 1
+const val DATA_STATE_OK  = 2
 
 class PullListPresenterImpl @Inject constructor(private val githubService: GithubService)
     : AbstractFragmentPresenterImpl<PullListScene>(), PullListPresenter {
-    var hasMorePages = true
-    var currentPage = 1
+    val dataState = PublishSubject.create<Int>()
     var fetchPageSubscription: Disposable? = null
+    var dataStateSubscription: Disposable? = null
     lateinit var user: String
     lateinit var repo: String
 
@@ -33,68 +41,27 @@ class PullListPresenterImpl @Inject constructor(private val githubService: Githu
 
         if (user != "" && repo != "") {
             fragmentScene.setToolbarTitle(user + " - " + repo)
-            fetchPage(1)
-        }
-    }
+            //fetchPage(1)
 
-    override fun fetchMore(): Boolean {
-        if (hasMorePages) {
-            currentPage++
-            fetchPage(currentPage)
-            return true
-        } else {
-            return false
-        }
-    }
+            val pagedPullList = RxPagedListBuilder<Int, PullRequest>(PullsDataSourceFactory(), GITHUB_API_DEAFULT_PAGE_SIZE)
+                    .setFetchScheduler(Schedulers.io())
+                    .setNotifyScheduler(AndroidSchedulers.mainThread())
+                    .buildObservable()
+            fetchPageSubscription = pagedPullList
+                    .subscribe({
+                        fragmentScene.setPagedPullList(it)
+                    }, {
+                        it.printStackTrace()
+                    })
 
-    fun fetchPage(page: Int) {
-        fetchPageSubscription = githubService.getOpenPulls(user, repo, /*PULL_STATE_OPEN,*/ page)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({response->
-                    response?.let {
-                        handleFetchPageResponse(ArrayList(it))
-                    }
-                }, {
-                    fragmentScene?.showNoDataError()
-                })
-    }
-
-    /*fun fetchPage(page: Int) {
-        val start = when(page) {
-            1 -> 1
-            2 -> 31
-            3 -> 61
-            else -> 0
-        }
-        val end = when(page) {
-            1 -> 31
-            2 -> 61
-            3 -> 66
-            else -> 0
-        }
-        fetchPageSubscription = Observable.just(PullRequest.mock(start, end))
-                .delay(1, TimeUnit.SECONDS)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({response->
-                    response?.let {
-                        Log.v("What", "Fetched " + it.size)
-                        handleFetchPageResponse(ArrayList(it))
-                    }
-                }, {
-                    it.printStackTrace()
-                })
-    }*/
-
-    fun handleFetchPageResponse(items: ArrayList<PullRequest>) {
-        if (items.size > 0) {
-            fragmentScene?.addPullItemsToList(items)
-        } else {
-            fragmentScene?.showNoDataError()
-        }
-        if (items.size < GITHUB_API_DEAFULT_PAGE_SIZE) {
-            hasMorePages = false
+            dataStateSubscription = dataState
+                    .observeOn(AndroidSchedulers.mainThread()) //Doesn't happen by default; people are liars
+                    .subscribe({
+                        when (it) {
+                            DATA_STATE_ERROR, DATA_STATE_BLANK -> fragmentScene.showNoDataError()
+                            DATA_STATE_OK -> fragmentScene.hideProgressBar()
+                        }
+                    })
         }
     }
 
@@ -105,5 +72,60 @@ class PullListPresenterImpl @Inject constructor(private val githubService: Githu
 
     override fun onSceneViewDestroyed() {
         fetchPageSubscription?.dispose()
+        dataStateSubscription?.dispose()
+    }
+
+    inner class PullsDataSourceFactory : DataSource.Factory<Int, PullRequest>() {
+        override fun create(): DataSource<Int, PullRequest> = PullsDataSource()
+    }
+
+    inner class PullsDataSource: PageKeyedDataSource<Int, PullRequest>() {
+        override fun loadInitial(params: LoadInitialParams<Int>, callback: LoadInitialCallback<Int, PullRequest>) {
+            try {
+                val pulls = githubService.getOpenPulls(user, repo, 1).execute().body()
+                if (pulls != null) {
+                    val nextKey = if (pulls.size == 30) {
+                        2
+                    } else {
+                        null
+                    }
+                    callback.onResult(pulls, null, nextKey)
+                    if (pulls.size == 0) {
+                        dataState.onNext(DATA_STATE_BLANK)
+                    } else {
+                        dataState.onNext(DATA_STATE_OK)
+                    }
+                } else {
+                    callback.onResult(ArrayList<PullRequest>(), null, null)
+                    dataState.onNext(DATA_STATE_BLANK)
+                }
+            } catch (ioe: IOException) {
+                // What do you want from me?
+                dataState.onNext(DATA_STATE_ERROR)
+            }
+        }
+
+        override fun loadAfter(params: LoadParams<Int>, callback: LoadCallback<Int, PullRequest>) {
+            try {
+                val pulls = githubService.getOpenPulls(user, repo, params.key).execute().body()
+                if (pulls != null) {
+                    val nextKey = if (pulls.size == 30) {
+                        params.key + 1
+                    } else {
+                        null
+                    }
+                    callback.onResult(pulls, nextKey)
+                } else {
+                    callback.onResult(ArrayList<PullRequest>(), null)
+                }
+            } catch (ioe: IOException) {
+                // What do you want from me?
+                dataState.onNext(DATA_STATE_ERROR)
+            }
+        }
+
+        override fun loadBefore(params: LoadParams<Int>, callback: LoadCallback<Int, PullRequest>) {
+            // I don't think I need this
+        }
     }
 }
