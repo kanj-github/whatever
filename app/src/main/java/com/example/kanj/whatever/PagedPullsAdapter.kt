@@ -4,7 +4,6 @@ import android.arch.paging.PagedListAdapter
 import android.support.v7.util.DiffUtil
 import android.support.v7.widget.RecyclerView
 import android.text.TextUtils
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,7 +11,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.example.kanj.api.response.PullRequest
 import com.squareup.picasso.Picasso
-
 import kotlinx.android.synthetic.main.item_pull.view.*
 
 class PagedPullsAdapter : PagedListAdapter<PullRequest, PagedPullsAdapter.ViewHolder>(DIFF_CALLBACK) {
@@ -32,10 +30,14 @@ class PagedPullsAdapter : PagedListAdapter<PullRequest, PagedPullsAdapter.ViewHo
                 holder.body.text = item.body
             }
 
+            holder.icon.visibility = View.VISIBLE
             Picasso.get().load(item.user.avatar_url).into(holder.icon)
         } else {
-            // What to do?
-            Log.v("Kanj", "bind view with null item")
+            // What to do man?
+            holder.title.text = ""
+            holder.user.text = ""
+            holder.body.visibility = View.GONE
+            holder.icon.visibility = View.INVISIBLE
         }
     }
 
