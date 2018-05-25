@@ -27,6 +27,7 @@ class PagedPullsAdapter : PagedListAdapter<PullRequest, PagedPullsAdapter.ViewHo
             if (TextUtils.isEmpty(item.body)) {
                 holder.body.visibility = View.GONE
             } else {
+                holder.body.visibility = View.VISIBLE
                 holder.body.text = item.body
             }
 
